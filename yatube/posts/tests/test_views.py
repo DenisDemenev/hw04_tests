@@ -45,9 +45,9 @@ class PostsPagesTests(TestCase):
 
     def test_pages_correct_template(self):
         templates_page_names = {
-            'posts/index.html': reverse('index'),
-            'posts/new_post.html': reverse('new_post'),
-            'posts/group.html': reverse('group_posts',
+            'templates/index.html': reverse('index'),
+            'templates/new.html': reverse('new_post'),
+            'templates/group.html': reverse('group_posts',
                                         kwargs={'slug': 'test-slug'}),
         }
         for template, reverse_name in templates_page_names.items():
