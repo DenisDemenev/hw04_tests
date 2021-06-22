@@ -1,22 +1,23 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
-from ..models import Post, Group
+from posts.models import Post, Group
 
 User = get_user_model()
+
 
 class StaticURLTests(TestCase):
     def setUp(self):
         self.guest_client = Client()
 
     def test_home(self):
-        response = self.guest_client.get('/')  
+        response = self.guest_client.get('/')
         self.assertEqual(response.status_code, 200)
-    
+
     def test_author(self):
         response = self.guest_client.get('/author')
         self.assertEqual(response.status_code, 200)
-    
+
     def test_tech(self):
         response = self.guest_client.get('/tech')
         self.assertEqual(response.status_code, 200)
@@ -42,15 +43,14 @@ class PostURLTests(TestCase):
         self.user = User.objects.create_user(username='DenisD')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-    
-    def test_urls_uses_correct_template(self):
+
+    def test_urls_uses_template(self):
         templates_url_names = {
             'templates/index.html': '/',
-            'templates/group.html':'group/slug-test/',
+            'templates/group.html': 'group/slug-test/',
             'templates/new.html': 'new/',
             'templates/post.html': 'DenisD/189',
             'templates/profile.html': 'DenisD/',
-            'templates/new.html': 'DenisD/189/edit/',
         }
         for template, adress in templates_url_names.items():
             with self.subTest(adress=adress):

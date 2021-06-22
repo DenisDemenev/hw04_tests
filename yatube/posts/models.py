@@ -10,7 +10,7 @@ class Group(models.Model):
     slug = models.SlugField(unique=True, verbose_name='Ссылка')
     description = models.TextField(verbose_name='Описание сообщества',
                                    help_text='Здесь напишите описание')
-   
+
     class Meta:
         verbose_name = 'Сообщество'
         verbose_name_plural = 'Сообщества'
@@ -20,14 +20,15 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-    text = models.TextField(verbose_name='Тест поста', 
+    text = models.TextField(verbose_name='Тест поста',
                             help_text='Здесь напишите текст вашего поста')
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE,
-                               related_name='posts', verbose_name='Автор поста')
+                               related_name='posts',
+                               verbose_name='Автор поста')
     group = models.ForeignKey(Group, on_delete=models.SET_NULL,
                               blank=True, null=True, related_name='posts',
-                              verbose_name='Сообщество', 
+                              verbose_name='Сообщество',
                               help_text='Выберите сообщество')
 
     class Meta:

@@ -1,9 +1,9 @@
 from django.test import TestCase
-from ..models import Post, Group
+from posts.models import Post, Group
 
 
 class PostModelTest(TestCase):
-    @classmethod    
+    @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.Post = Post.objects.create(
@@ -11,8 +11,7 @@ class PostModelTest(TestCase):
             id='198',
         )
 
-        cls.post= Post.objects.get(id='198')
-    
+        cls.post = Post.objects.get(id='198')
         cls.Group = Group.objects.create(
             title='Тестовая группа',
             slug='slug-test',
