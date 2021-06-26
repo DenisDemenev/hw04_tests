@@ -1,62 +1,85 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import Client, TestCase
+from django.urls import reverse
 
-from posts.models import Post, Group
+from posts.models import Group, Post
 
 User = get_user_model()
 
 
-class StaticURLTests(TestCase):
-    def setUp(self):
-        self.guest_client = Client()
-
-    def test_home(self):
-        response = self.guest_client.get('/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_author(self):
-        response = self.guest_client.get('/author')
-        self.assertEqual(response.status_code, 200)
-
-    def test_tech(self):
-        response = self.guest_client.get('/tech')
-        self.assertEqual(response.status_code, 200)
-
-
-class PostURLTests(TestCase):
+class PostsURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        Post.objects.create(
-            text='Тестовый текст',
-            id='189'
-        )
-        super().setUpClass()
-        Group.objects.create(
-            title='Тестовая группа',
-            slug='slug-test',
-            description='Тестовое описание сообщества'
-        )
+        cls.group = Group.objects.create(title='Название',
+                                         slug='test-slug',
+                                         description='Описание')
+        cls.author = User.objects.create_user(username='Author')
+        cls.no_author = User.objects.create_user(username='NoAuthor')
+        cls.post = Post.objects.create(author=cls.author,
+                                       text='Пост')
+        cls.templates_url_names = {
+            'index.html': reverse('index'),
+            'group.html': reverse('group_posts',
+                                  kwargs={'slug': cls.group.slug}),
+            'new.html': reverse('new_post'),
+            'profile.html': reverse(
+                'profile',
+                kwargs={'username': cls.author.username}
+            ),
+            'post.html': reverse(
+                'post',
+                kwargs={'username': cls.author.username,
+                        'post_id': cls.post.id}
+            ),
+        }
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='DenisD')
+
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(self.author)
+
+        self.no_author_client = Client()
+        self.no_author_client.force_login(self.no_author)
 
     def test_urls_uses_template(self):
-        templates_url_names = {
-            'templates/index.html': '/',
-            'templates/group.html': 'group/slug-test/',
-            'templates/new.html': 'new/',
-            'templates/post.html': 'DenisD/189',
-            'templates/profile.html': 'DenisD/',
-        }
-        for template, adress in templates_url_names.items():
-            with self.subTest(adress=adress):
-                response = self.authorized_client.get(adress)
+        for template, reverse_name in self.templates_url_names.items():
+            with self.subTest():
+                response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-            with self.subTest(adress=adress):
-                response = self.guest_client.get(adress)
-                self.assertTemplateUsed(response, template)
+    def test_url_for_guest(self):
+        for template, reverse_name in self.templates_url_names.items():
+            with self.subTest():
+                if reverse_name == reverse('new_post'):
+                    response = self.guest_client.get(reverse_name)
+                    self.assertEqual(response.status_code, 302)
+                else:
+                    response = self.guest_client.get(reverse_name)
+                    self.assertEqual(response.status_code, 200)
+        response = self.guest_client.get(
+            reverse('post_edit',
+                    kwargs={'username': self.author.username,
+                            'post_id': self.post.id}),
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_url_for_author(self):
+        for template, reverse_name in self.templates_url_names.items():
+            with self.subTest():
+                response = self.authorized_client.get(reverse_name)
+                self.assertEqual(response.status_code, 200)
+
+    def test_url_for_no_author(self):
+        for template, reverse_name in self.templates_url_names.items():
+            with self.subTest():
+                if reverse_name == reverse(
+                        'post_edit',
+                        kwargs={'username': self.author.username,
+                                'post_id': self.post.id}, ):
+                    response = self.no_author_client.get(reverse_name)
+                    self.assertEqual(response.status_code, 302)
+                else:
+                    response = self.no_author_client.get(reverse_name)
+                    self.assertEqual(response.status_code, 200)

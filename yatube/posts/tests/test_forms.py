@@ -13,9 +13,9 @@ class PostFormTests(TestCase):
         super().setUpClass()
         cls.author = User.objects.create(username='DenisD')
         cls.group = Group.objects.create(
-            title='Тестовое название группы',
+            title='Название',
             slug='test_slug',
-            description='Тестовое описание группы'
+            description='Описание группы'
         )
         cls.test_user = User.objects.create(
             username='test_user'
@@ -36,7 +36,7 @@ class PostFormTests(TestCase):
         self.authorized_client.force_login(self.author)
         self.guest_client = Client()
 
-    def test_post_form_create_new_post(self):
+    def test_form_create_new_post(self):
         posts_count = Post.objects.count()
         form_data = {'text': 'Тестовый пост из формы', 'group': self.group.id}
         new_text_form = 'Тестовый пост из формы'
