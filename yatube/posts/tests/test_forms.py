@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -12,6 +14,9 @@ class PostFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.author = User.objects.create(username='DenisD')
+        cls.not_author_user = User.objects.create(
+            username='not_author'
+        )
         cls.group = Group.objects.create(
             title='Название',
             slug='test_slug',
@@ -30,8 +35,15 @@ class PostFormTests(TestCase):
             text='Тестовый пост',
             group=cls.group
         )
+        cls.test_post = Post.objects.create(
+            text='Тестовый текст записи',
+            author=cls.test_user,
+            group=cls.test_group,
+        )
 
     def setUp(self):
+        self.not_author_client = Client()
+        self.not_author_client.force_login(self.not_author_user)
         self.authorized_client = Client()
         self.authorized_client.force_login(self.author)
         self.guest_client = Client()
@@ -39,20 +51,20 @@ class PostFormTests(TestCase):
     def test_form_create_new_post(self):
         posts_count = Post.objects.count()
         form_data = {'text': 'Тестовый пост из формы', 'group': self.group.id}
-        new_text_form = 'Тестовый пост из формы'
+        new_text_form = form_data['text']
         response = self.authorized_client.post(
             reverse('new_post'),
             data=form_data,
             follow=True
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(Post.objects.filter(
             text=new_text_form,
             group=self.group.id,
             author=self.author
         ).exists())
-        last_object = Post.objects.filter().order_by('-id')[0]
+        last_object = Post.objects.order_by('id').last()
         self.assertEqual(last_object.text, form_data['text'])
         self.assertRedirects(response, reverse('index'))
 
@@ -88,34 +100,21 @@ class PostFormTests(TestCase):
             follow=True
         )
         self.assertEqual(Post.objects.count(), posts_count)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_edit_post_not_author(self):
         form_data_edit = {
             'text': 'Исправленный не автором текст записи',
             'group': self.test_group.id,
         }
-        test_post = Post.objects.create(
-            text='Тестовый текст записи',
-            author=self.test_user,
-            group=self.test_group,
-        )
-
-        not_author_user = User.objects.create(
-            username='not_author'
-        )
-        not_author_client = Client()
-        not_author_client.force_login(not_author_user)
-
-        kwargs = {'username': 'test_user', 'post_id': test_post.id}
-
-        response = not_author_client.post(
-            reverse('post_edit', kwargs=kwargs),
+        response = self.not_author_client.post(
+            reverse('post_edit', kwargs={'username': self.test_user,
+                                         'post_id': self.test_post.id}),
             data=form_data_edit,
             follow=True
         )
-        test_post.refresh_from_db()
-        self.assertNotEqual(test_post.text, form_data_edit['text'])
-        self.assertEqual(test_post.group, self.test_group)
-        self.assertEqual(test_post.author, self.test_user)
-        self.assertEqual(response.status_code, 200)
+        self.test_post.refresh_from_db()
+        self.assertNotEqual(self.test_post.text, form_data_edit['text'])
+        self.assertEqual(self.test_post.group, self.test_group)
+        self.assertEqual(self.test_post.author, self.test_user)
+        self.assertEqual(response.status_code, HTTPStatus.OK)

@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -54,22 +56,22 @@ class PostsURLTests(TestCase):
             with self.subTest():
                 if reverse_name == reverse('new_post'):
                     response = self.guest_client.get(reverse_name)
-                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(response.status_code, HTTPStatus.FOUND)
                 else:
                     response = self.guest_client.get(reverse_name)
-                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.guest_client.get(
             reverse('post_edit',
                     kwargs={'username': self.author.username,
                             'post_id': self.post.id}),
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_url_for_author(self):
         for template, reverse_name in self.templates_url_names.items():
             with self.subTest():
                 response = self.authorized_client.get(reverse_name)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_url_for_no_author(self):
         for template, reverse_name in self.templates_url_names.items():
@@ -79,7 +81,7 @@ class PostsURLTests(TestCase):
                         kwargs={'username': self.author.username,
                                 'post_id': self.post.id}, ):
                     response = self.no_author_client.get(reverse_name)
-                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(response.status_code, HTTPStatus.FOUND)
                 else:
                     response = self.no_author_client.get(reverse_name)
-                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(response.status_code, HTTPStatus.OK)
