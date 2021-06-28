@@ -25,7 +25,7 @@ class PostPagesTests(TestCase):
         cls.templates_pages_names = {
             'index.html': reverse('index'),
             'group.html': reverse('group_posts',
-                                  kwargs={'slug': 'test-slug'}),
+                                  kwargs={'slug': cls.group.slug}),
             'new.html': reverse('new_post')
         }
 
