@@ -1,26 +1,14 @@
 {% extends "base.html" %}
+{% load cache %}
 {% block title %}Последние обновления на сайте{% endblock %}
 {% block header %}Последние обновления на сайте{% endblock %}
 {% block content %}
+<div class="container">
 
     {% for post in page %}
-    <h3>
-    Автор: <a href={% url 'profile' post.author.username %}>
-        <strong class="d-block text-gray-dark"></strong>
-        {{ post.author.get_full_name }}</strong></a>,
-        Дата публикации: {{ post.pub_date|date:"d M Y" }}
-    </h3>
-    <p>{{ post.text|linebreaksbr }}</p>
-    <div class="btn-group ">
-        <a class="btn btn-sm text-muted" href={% url 'post' post.author.username post.id %} role="button">Добавить комментарий</a>
-        {% if post.author.username == user.username %}
-        <a class="btn btn-sm text-muted" href={% url 'post_edit' post.author.username post.id %} role="button">Редактировать</a>
-    {% endif %} 
-    </div>
-
-    {% if not forloop.last %}<hr>{% endif %}
-
+    {% include "includes/post_item.html" with post=post %}
     {% endfor %}
+</div>
     {% include "includes/paginator.html" %}
 
 {% endblock %} 
